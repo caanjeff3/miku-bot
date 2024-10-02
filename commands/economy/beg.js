@@ -1,0 +1,36 @@
+const { SlashCommandBuilder } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
+
+const usersFilePath = path.join(__dirname, 'users.json');
+
+module.exports = {
+    cooldown: 150,  // 2 minutes 30 seconds
+    data: new SlashCommandBuilder()
+        .setName('beg')
+        .setDescription('Beg for money and receive a random amount between $50 and $200'),
+    async execute(interaction) {
+        const userId = interaction.user.id;
+
+        let usersData;
+        try {
+            usersData = JSON.parse(fs.readFileSync(usersFilePath, 'utf-8'));
+        } catch (error) {
+            usersData = {};
+        }
+
+        // Initialize user with 100 if they don't exist
+        if (!usersData[userId]) {
+            usersData[userId] = { money: 100 };
+        }
+
+        // Random amount between 50 and 200
+        const randomAmount = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
+
+        // Add the random amount to the user's total money
+        usersData[userId].money += randomAmount;
+        fs.writeFileSync(usersFilePath, JSON.stringify(usersData, null, 2));
+
+        return interaction.reply(`You begged and received $${randomAmount}! Your new balance is: $${usersData[userId].money}`);
+    },
+};
