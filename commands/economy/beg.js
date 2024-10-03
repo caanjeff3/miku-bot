@@ -8,7 +8,7 @@ module.exports = {
     cooldown: 150,  // 2 minutes 30 seconds
     data: new SlashCommandBuilder()
         .setName('beg')
-        .setDescription('Beg for money and receive a random amount between $50 and $200'),
+        .setDescription('Beg for money and receive a random amount between $50 and $200, affected by your multiplier'),
     async execute(interaction) {
         const userId = interaction.user.id;
 
@@ -19,18 +19,19 @@ module.exports = {
             usersData = {};
         }
 
-        // Initialize user with 100 if they don't exist
         if (!usersData[userId]) {
-            usersData[userId] = { money: 100 };
+            usersData[userId] = { money: 100, multiplier: 1 };
         }
 
-        // Random amount between 50 and 200
+        const userMultiplier = usersData[userId].multiplier || 1;
+
         const randomAmount = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
 
-        // Add the random amount to the user's total money
-        usersData[userId].money += randomAmount;
+        const totalAmount = Math.floor(randomAmount * userMultiplier);
+
+        usersData[userId].money += Math.round(totalAmount);
         fs.writeFileSync(usersFilePath, JSON.stringify(usersData, null, 2));
 
-        return interaction.reply(`You begged and received $${randomAmount}! Your new balance is: $${usersData[userId].money}`);
+        return interaction.reply(`You begged and received $${totalAmount} (including your multiplier)! Your new balance is: $${usersData[userId].money}`);
     },
 };
